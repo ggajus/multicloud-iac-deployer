@@ -1,0 +1,5 @@
+project_id = "project-9d21db3e-1ebb-4126-a89"
+region = "europe-west3"
+instance_id = "simple-vm-01"
+size = "small"
+os = "ubuntu"
