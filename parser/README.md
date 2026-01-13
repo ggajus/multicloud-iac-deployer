@@ -11,7 +11,8 @@ This parser converts JSON deployment configurations into `.tfvars` files for Ope
 ## Installation
 
 ```bash
-pip install -r requirements.txt
+cd parser
+go mod download
 ```
 
 ## Usage

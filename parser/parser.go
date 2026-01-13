@@ -229,12 +229,12 @@ func parse(configPath string) bool {
 	fmt.Println("✓ Configuration validated successfully")
 
 	// Generate version dir based on timestamp
-	versionDir := fmt.Sprintf("deployment_%s", time.Now().Format("20060102_150405"))
+	versionDir := fmt.Sprintf("tfvars_%s", time.Now().Format("20060102_150405"))
 
 	provider, _ := config["provider"].(string)
 	services, _ := config["services"].([]interface{})
 
-	outputDir := filepath.Join("..", "opentofu", provider, versionDir)
+	outputDir := filepath.Join("..", "deployment", provider, versionDir)
 
 	// Process each service
 	for _, svc := range services {
