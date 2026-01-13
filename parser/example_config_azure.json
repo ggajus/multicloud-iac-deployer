@@ -1,0 +1,13 @@
+{
+  "provider": "azure",
+  "region": "Sweden Central",
+  "version": "v1.0.0",
+  "services": [
+    {
+      "type": "compute.instance",
+      "instance_id": "sky-azure-vm-01",
+      "size": "small",
+      "os": "debian"
+    }
+  ]
+}
