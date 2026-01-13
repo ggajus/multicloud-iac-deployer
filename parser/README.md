@@ -18,5 +18,9 @@ pip install -r requirements.txt
 
 ```bash
 cd parser # Must run in correct folder
-python parser.py <config.json>
+
+go run parser.go <config.json>
+# or
+go build -o parser parser.go
+./parser <config.json>
 ```
