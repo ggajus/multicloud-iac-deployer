@@ -46,20 +46,29 @@ func validateConfig(schema *gojsonschema.Schema, config map[string]interface{}) 
 		return false, strings.Join(errors, "; ")
 	}
 
-	// GCP-specific validation
 	provider, _ := config["provider"].(string)
-	if provider == "gcp" {
+
+	// provider-specific validation
+	if provider == "gcp" { // GCP
 		services, _ := config["services"].([]interface{})
 		for _, svc := range services {
 			service, ok := svc.(map[string]interface{})
 			if !ok {
 				continue
 			}
-			serviceType, _ := service["type"].(string)
-			if serviceType == "compute.instance" {
-				if _, hasProjectID := service["project_id"]; !hasProjectID {
-					return false, "GCP compute.instance requires 'project_id' in service configuration"
-				}
+			if _, hasProjectID := service["project_id"]; !hasProjectID {
+				return false, "GCP compute.instance requires 'project_id' in service configuration"
+			}
+		}
+	} else if provider == "azure" { // Azure
+		services, _ := config["services"].([]interface{})
+		for _, svc := range services {
+			service, ok := svc.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if _, hasSubId := service["subscription_id"]; !hasSubId {
+				return false, "GCP compute.instance requires 'subscription_id' in service configuration"
 			}
 		}
 	}
@@ -161,14 +170,17 @@ func generateAzureTfvars(config map[string]interface{}, service map[string]inter
 	region, _ := config["region"].(string)
 	lines = append(lines, fmt.Sprintf(`location = "%s"`, region))
 
-	instanceID, _ := service["instance_id"].(string)
-	lines = append(lines, fmt.Sprintf(`instance_id = "%s"`, instanceID))
+	if instanceID, ok := service["instance_id"].(string); ok {
+		lines = append(lines, fmt.Sprintf(`instance_id = "%s"`, instanceID))
+	}
 
-	size, _ := service["size"].(string)
-	lines = append(lines, fmt.Sprintf(`size = "%s"`, size))
+	if size, ok := service["size"].(string); ok {
+		lines = append(lines, fmt.Sprintf(`size = "%s"`, size))
+	}
 
-	os, _ := service["os"].(string)
-	lines = append(lines, fmt.Sprintf(`os = "%s"`, os))
+	if os, ok := service["os"].(string); ok {
+		lines = append(lines, fmt.Sprintf(`os = "%s"`, os))
+	}
 
 	if diskSizeGB, ok := service["disk_size_gb"]; ok {
 		lines = append(lines, fmt.Sprintf("disk_size_gb = %s", formatTfvarsValue(diskSizeGB)))
@@ -184,6 +196,20 @@ func generateAzureTfvars(config map[string]interface{}, service map[string]inter
 
 	if sshKey, ok := service["ssh_public_key"].(string); ok {
 		lines = append(lines, fmt.Sprintf(`ssh_public_key = "%s"`, sshKey))
+	}
+
+	// Insert Azure storage_object relevant attributes for test.tfvars compatibility, if not exists.
+	if subscriptionID, ok := service["subscription_id"].(string); ok {
+		lines = append(lines, fmt.Sprintf(`subscription_id = "%s"`, subscriptionID))
+	}
+	if bucketID, ok := service["bucket_id"].(string); ok {
+		lines = append(lines, fmt.Sprintf(`bucket_id = "%s"`, bucketID))
+	}
+	if storageTier, ok := service["storage_tier"].(string); ok {
+		lines = append(lines, fmt.Sprintf(`storage_tier = "%s"`, storageTier))
+	}
+	if versioning, ok := service["versioning"]; ok {
+		lines = append(lines, fmt.Sprintf("versioning = %s", formatTfvarsValue(versioning)))
 	}
 
 	return strings.Join(lines, "\n") + "\n"
