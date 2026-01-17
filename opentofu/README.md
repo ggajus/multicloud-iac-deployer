@@ -64,3 +64,38 @@ The Orchestrator must maintain a database linking the logical request to physica
 }
 
 ```
+
+## 4. Supported Primitives
+
+### `compute_instance`
+
+**Common Inputs:**
+* `instance_id` (string): Unique identifier.
+* `size` (string): `small`, `medium`, `large`.
+* `os` (string): `ubuntu`, `debian`.
+* `disk_size_gb` (number): Size of the root disk.
+* `metadata` (map): Arbitrary tags/labels.
+
+**Provider Specifics:**
+* **AWS**: Requires `region`. Optional `ssh_public_key`.
+* **Azure**: Requires `subscription_id`, `location`. Optional `admin_username`, `ssh_public_key`.
+* **GCP**: Requires `project_id`, `region`.
+
+### `storage_object`
+
+**Common Inputs:**
+* `bucket_id` (string): Globally unique name. (Note: Automatically sanitized to lowercase across all providers for compatibility).
+* `storage_tier` (string): `standard`, `infrequent`, `cold`, `archive`.
+* `versioning` (bool): Enable object versioning.
+* `metadata` (map): Arbitrary tags/labels.
+
+**Common Outputs:**
+* `bucket_name`: The final, logical name of the created bucket.
+* `bucket_endpoint`: The HTTP(S) endpoint for accessing the bucket.
+
+**Provider Specifics:**
+* **AWS**: Requires `region`.
+* **Azure**: Requires `subscription_id`, `location`. Sanitizes `bucket_id` by removing non-alphanumeric characters.
+* **GCP**: Requires `project_id`, `region`.
+
+
