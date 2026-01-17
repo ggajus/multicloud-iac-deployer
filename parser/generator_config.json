@@ -1,0 +1,56 @@
+{
+    "aws": {
+        "compute.instance": [
+            { "field": "region", "source": "config"},
+            { "field": "instance_id", "source": "service"},
+            { "field": "size", "source": "service"},
+            { "field": "os", "source": "service"},
+            { "field": "disk_size_gb", "source": "service"},
+            { "field": "metadata", "source": "service", "skip_empty": true },
+            { "field": "ssh_public_key", "source": "service", "default": "" }
+        ],
+        "storage.object": [
+            { "field": "region", "source": "config"},
+            { "field": "bucket_id", "source": "service"},
+            { "field": "storage_tier", "source": "service"},
+            { "field": "versioning", "source": "service"}
+        ]
+    },
+    "gcp": {
+        "compute.instance": [
+            { "field": "project_id", "source": "service"},
+            { "field": "region", "source": "config"},
+            { "field": "instance_id", "source": "service"},
+            { "field": "size", "source": "service"},
+            { "field": "os", "source": "service"},
+            { "field": "disk_size_gb", "source": "service"},
+            { "field": "metadata", "source": "service", "skip_empty": true }
+        ],
+        "storage.object": [
+            { "field": "project_id", "source": "service"},
+            { "field": "region", "source": "config"},
+            { "field": "bucket_id", "source": "service"},
+            { "field": "storage_tier", "source": "service"},
+            { "field": "versioning", "source": "service"}
+        ]
+    },
+    "azure": {
+        "compute.instance": [
+            { "field": "location", "source": "config", "required": true, "mapping": "region" },
+            { "field": "instance_id", "source": "service"},
+            { "field": "size", "source": "service"},
+            { "field": "os", "source": "service"},
+            { "field": "disk_size_gb", "source": "service"},
+            { "field": "metadata", "source": "service", "skip_empty": true },
+            { "field": "admin_username", "source": "service"},
+            { "field": "ssh_public_key", "source": "service"}
+        ],
+        "storage.object": [
+            { "field": "location", "source": "config", "required": true, "mapping": "region" },
+            { "field": "subscription_id", "source": "service"},
+            { "field": "bucket_id", "source": "service"},
+            { "field": "storage_tier", "source": "service"},
+            { "field": "versioning", "source": "service"}
+        ]
+    }
+}

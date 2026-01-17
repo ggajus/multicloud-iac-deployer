@@ -11,6 +11,30 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
+type AttributeConfig struct {
+	Field     string      `json:"field"`
+	Source    string      `json:"source"`
+	Required  bool        `json:"required"`
+	Mapping   string      `json:"mapping"`
+	SkipEmpty bool        `json:"skip_empty"`
+	Default   interface{} `json:"default"`
+}
+
+var generatorConfig map[string]map[string][]AttributeConfig
+
+func loadGeneratorConfig() error {
+	configData, err := os.ReadFile("generator_config.json")
+	if err != nil {
+		return fmt.Errorf("error loading generator config: %w", err)
+	}
+
+	if err := json.Unmarshal(configData, &generatorConfig); err != nil {
+		return fmt.Errorf("error parsing generator config: %w", err)
+	}
+
+	return nil
+}
+
 func loadSchema(schemaPath string) (*gojsonschema.Schema, error) {
 	absPath, err := filepath.Abs(schemaPath)
 	if err != nil {
@@ -102,114 +126,59 @@ func formatTfvarsValue(value interface{}) string {
 	}
 }
 
-func generateAWSTfvars(config map[string]interface{}, service map[string]interface{}) string {
+func generateTfvars(provider, serviceType string, config, service map[string]interface{}) string {
 	var lines []string
 
-	region, _ := config["region"].(string)
-	lines = append(lines, fmt.Sprintf(`region = "%s"`, region))
-
-	instanceID, _ := service["instance_id"].(string)
-	lines = append(lines, fmt.Sprintf(`instance_id = "%s"`, instanceID))
-
-	size, _ := service["size"].(string)
-	lines = append(lines, fmt.Sprintf(`size = "%s"`, size))
-
-	os, _ := service["os"].(string)
-	lines = append(lines, fmt.Sprintf(`os = "%s"`, os))
-
-	if diskSizeGB, ok := service["disk_size_gb"]; ok {
-		lines = append(lines, fmt.Sprintf("disk_size_gb = %s", formatTfvarsValue(diskSizeGB)))
+	// Get attribute configuration based on provider & service
+	providerConfig, ok := generatorConfig[provider]
+	if !ok {
+		return ""
 	}
 
-	if metadata, ok := service["metadata"].(map[string]interface{}); ok && len(metadata) > 0 {
-		lines = append(lines, fmt.Sprintf("metadata = %s", formatTfvarsValue(metadata)))
+	attrs, ok := providerConfig[serviceType]
+	if !ok {
+		return ""
 	}
 
-	if sshKey, ok := service["ssh_public_key"].(string); ok {
-		lines = append(lines, fmt.Sprintf(`ssh_public_key = "%s"`, sshKey))
-	} else {
-		lines = append(lines, `ssh_public_key = ""`)
-	}
+	for _, attr := range attrs {
+		// Determine source map
+		sourceMap := service
+		if attr.Source == "config" {
+			sourceMap = config
+		}
 
-	return strings.Join(lines, "\n") + "\n"
-}
+		// Get source field name (use mapping if specified, otherwise use field name)
+		sourceField := attr.Field
+		if attr.Mapping != "" {
+			sourceField = attr.Mapping
+		}
 
-func generateGCPTfvars(config map[string]interface{}, service map[string]interface{}) string {
-	var lines []string
+		value, exists := sourceMap[sourceField]
 
-	if projectID, ok := service["project_id"].(string); ok {
-		lines = append(lines, fmt.Sprintf(`project_id = "%s"`, projectID))
-	}
+		// Handle default values
+		if !exists && attr.Default != nil {
+			value = attr.Default
+			exists = true
+		}
 
-	region, _ := config["region"].(string)
-	lines = append(lines, fmt.Sprintf(`region = "%s"`, region))
+		// Skip if not exists
+		if !exists {
+			continue
+		}
 
-	instanceID, _ := service["instance_id"].(string)
-	lines = append(lines, fmt.Sprintf(`instance_id = "%s"`, instanceID))
+		// Skip empty values if specified
+		if attr.SkipEmpty {
+			if strVal, ok := value.(string); ok && strVal == "" {
+				continue
+			}
+			if mapVal, ok := value.(map[string]interface{}); ok && len(mapVal) == 0 {
+				continue
+			}
+		}
 
-	size, _ := service["size"].(string)
-	lines = append(lines, fmt.Sprintf(`size = "%s"`, size))
-
-	os, _ := service["os"].(string)
-	lines = append(lines, fmt.Sprintf(`os = "%s"`, os))
-
-	if diskSizeGB, ok := service["disk_size_gb"]; ok {
-		lines = append(lines, fmt.Sprintf("disk_size_gb = %s", formatTfvarsValue(diskSizeGB)))
-	}
-
-	if metadata, ok := service["metadata"].(map[string]interface{}); ok && len(metadata) > 0 {
-		lines = append(lines, fmt.Sprintf("metadata = %s", formatTfvarsValue(metadata)))
-	}
-
-	return strings.Join(lines, "\n") + "\n"
-}
-
-func generateAzureTfvars(config map[string]interface{}, service map[string]interface{}) string {
-	var lines []string
-
-	region, _ := config["region"].(string)
-	lines = append(lines, fmt.Sprintf(`location = "%s"`, region))
-
-	if instanceID, ok := service["instance_id"].(string); ok {
-		lines = append(lines, fmt.Sprintf(`instance_id = "%s"`, instanceID))
-	}
-
-	if size, ok := service["size"].(string); ok {
-		lines = append(lines, fmt.Sprintf(`size = "%s"`, size))
-	}
-
-	if os, ok := service["os"].(string); ok {
-		lines = append(lines, fmt.Sprintf(`os = "%s"`, os))
-	}
-
-	if diskSizeGB, ok := service["disk_size_gb"]; ok {
-		lines = append(lines, fmt.Sprintf("disk_size_gb = %s", formatTfvarsValue(diskSizeGB)))
-	}
-
-	if metadata, ok := service["metadata"].(map[string]interface{}); ok && len(metadata) > 0 {
-		lines = append(lines, fmt.Sprintf("metadata = %s", formatTfvarsValue(metadata)))
-	}
-
-	if adminUsername, ok := service["admin_username"].(string); ok {
-		lines = append(lines, fmt.Sprintf(`admin_username = "%s"`, adminUsername))
-	}
-
-	if sshKey, ok := service["ssh_public_key"].(string); ok {
-		lines = append(lines, fmt.Sprintf(`ssh_public_key = "%s"`, sshKey))
-	}
-
-	// Insert Azure storage_object relevant attributes for test.tfvars compatibility, if not exists.
-	if subscriptionID, ok := service["subscription_id"].(string); ok {
-		lines = append(lines, fmt.Sprintf(`subscription_id = "%s"`, subscriptionID))
-	}
-	if bucketID, ok := service["bucket_id"].(string); ok {
-		lines = append(lines, fmt.Sprintf(`bucket_id = "%s"`, bucketID))
-	}
-	if storageTier, ok := service["storage_tier"].(string); ok {
-		lines = append(lines, fmt.Sprintf(`storage_tier = "%s"`, storageTier))
-	}
-	if versioning, ok := service["versioning"]; ok {
-		lines = append(lines, fmt.Sprintf("versioning = %s", formatTfvarsValue(versioning)))
+		// Format and append the line
+		formattedValue := formatTfvarsValue(value)
+		lines = append(lines, fmt.Sprintf("%s = %s", attr.Field, formattedValue))
 	}
 
 	return strings.Join(lines, "\n") + "\n"
@@ -275,18 +244,8 @@ func parse(configPath string) bool {
 		}
 
 		// Generate .tfvars content based on provider
-		var tfvarsContent string
-		switch provider {
-		case "aws":
-			tfvarsContent = generateAWSTfvars(config, service)
-		case "gcp":
-			tfvarsContent = generateGCPTfvars(config, service)
-		case "azure":
-			tfvarsContent = generateAzureTfvars(config, service)
-		default:
-			fmt.Printf("[ERROR] Unknown provider %s\n", provider)
-			return false
-		}
+		serviceType, _ := service["type"].(string)
+		tfvarsContent := generateTfvars(provider, serviceType, config, service)
 
 		// Name .tfvars file based on service
 		tfvarsFile := filepath.Join(outputDir, fmt.Sprintf("%s.tfvars", getServiceFolderName(service["type"].(string))))
@@ -306,6 +265,12 @@ func parse(configPath string) bool {
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: go run parser.go <config.json>")
+		os.Exit(1)
+	}
+
+	// Load generator configuration
+	if err := loadGeneratorConfig(); err != nil {
+		fmt.Printf("[ERROR] %v\n", err)
 		os.Exit(1)
 	}
 

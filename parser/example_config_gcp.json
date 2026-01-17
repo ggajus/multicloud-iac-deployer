@@ -14,7 +14,8 @@
         "type": "storage.object",
         "bucket_id": "sky-control-demo-bucket-12345",
         "storage_tier": "standard",
-        "versioning": true
+        "versioning": true,
+        "project_id": "project-9d21db3e-1ebb-4126-a89"
     }
   ]
 }
