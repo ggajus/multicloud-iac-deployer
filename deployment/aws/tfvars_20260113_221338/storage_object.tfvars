@@ -1,5 +1,0 @@
-region = "eu-north-1"
-instance_id = ""
-size = ""
-os = ""
-ssh_public_key = ""
