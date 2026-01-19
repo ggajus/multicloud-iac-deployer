@@ -9,8 +9,6 @@ locals {
     "debian" = "debian-cloud/debian-11"
     "ubuntu" = "ubuntu-os-cloud/ubuntu-2204-lts"
   }
-
-  zone = "${var.region}-a"
 }
 
 resource "google_compute_instance" "vm" {
@@ -18,7 +16,7 @@ resource "google_compute_instance" "vm" {
 
   machine_type = local.size_map[var.size]
 
-  zone    = local.zone
+  zone    = var.zone
   project = var.project_id
 
   allow_stopping_for_update = true
@@ -37,6 +35,8 @@ resource "google_compute_instance" "vm" {
     }
   }
 
+  tags = ["sky-control-firewall"]
+
   labels = merge(var.metadata, {
     managed_by = "sky-control"
   })
@@ -44,4 +44,18 @@ resource "google_compute_instance" "vm" {
   service_account {
     scopes = ["cloud-platform"]
   }
+}
+
+resource "google_compute_firewall" "fw" {
+  name    = "${var.instance_id}-fw"
+  network = "default"
+  project = var.project_id
+
+  allow {
+    protocol = "tcp"
+    ports    = concat(["22"], [for p in var.allowed_ports : tostring(p)])
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["sky-control-firewall"]
 }

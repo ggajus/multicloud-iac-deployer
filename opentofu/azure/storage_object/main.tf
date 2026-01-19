@@ -15,7 +15,7 @@ locals {
 
 resource "azurerm_resource_group" "rg" {
   name     = "${var.bucket_id}-rg"
-  location = var.location
+  location = var.region
   tags     = var.metadata
 }
 

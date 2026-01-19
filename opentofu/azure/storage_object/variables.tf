@@ -1,9 +1,4 @@
-variable "subscription_id" {
-  description = "The Azure Subscription ID."
-  type        = string
-}
-
-variable "location" {
+variable "region" {
   description = "Azure Region (e.g., West Europe, East US)."
   type        = string
 }

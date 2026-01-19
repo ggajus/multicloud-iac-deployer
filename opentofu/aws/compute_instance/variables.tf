@@ -46,3 +46,9 @@ variable "ssh_public_key" {
   type        = string
   default     = ""
 }
+
+variable "allowed_ports" {
+  description = "List of ports to allow ingress traffic on."
+  type        = list(number)
+  default     = []
+}

@@ -3,8 +3,8 @@ variable "project_id" {
   type        = string
 }
 
-variable "region" {
-  description = "The GCP Region (e.g. europe-west1)."
+variable "zone" {
+  description = "The GCP Zone (e.g. europe-west1-a)."
   type        = string
 }
 
@@ -39,4 +39,10 @@ variable "metadata" {
   description = "Arbitrary metadata/labels."
   type        = map(string)
   default     = {}
+}
+
+variable "allowed_ports" {
+  description = "List of ports to allow ingress traffic on."
+  type        = list(number)
+  default     = []
 }

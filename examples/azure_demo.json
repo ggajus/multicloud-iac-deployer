@@ -1,0 +1,31 @@
+{
+  "project_name": "azure-demo-project",
+  "provider": "azure",
+  "region": "Sweden Central",
+  "version": "v1.0.0",
+  "services": [
+    {
+      "type": "compute.instance",
+      "instance_id": "az-demo-vm",
+      "size": "small",
+      "os": "ubuntu",
+      "disk_size_gb": 30,
+      "metadata": {
+        "app": "demo-app",
+        "tier": "backend"
+      },
+      "ssh_public_key": "",
+      "allowed_ports": [
+        22,
+        80,
+        443
+      ]
+    },
+    {
+      "type": "storage.object",
+      "bucket_id": "skycontroldemoazunique",
+      "storage_tier": "standard",
+      "versioning": false
+    }
+  ]
+}

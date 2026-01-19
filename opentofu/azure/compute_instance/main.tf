@@ -29,7 +29,7 @@ resource "tls_private_key" "example" {
 
 resource "azurerm_resource_group" "rg" {
   name     = "${var.instance_id}-rg"
-  location = var.location
+  location = var.region
   tags     = var.metadata
 }
 
@@ -55,6 +55,39 @@ resource "azurerm_public_ip" "pip" {
   sku                 = "Standard"
 }
 
+resource "azurerm_network_security_group" "nsg" {
+  name                = "${var.instance_id}-nsg"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  security_rule {
+    name                       = "SSH"
+    priority                   = 1001
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  dynamic "security_rule" {
+    for_each = var.allowed_ports
+    content {
+      name                       = "Allow-${security_rule.value}"
+      priority                   = 1002 + security_rule.key
+      direction                  = "Inbound"
+      access                     = "Allow"
+      protocol                   = "Tcp"
+      source_port_range          = "*"
+      destination_port_range     = security_rule.value
+      source_address_prefix      = "*"
+      destination_address_prefix = "*"
+    }
+  }
+}
+
 resource "azurerm_network_interface" "nic" {
   name                = "${var.instance_id}-nic"
   location            = azurerm_resource_group.rg.location
@@ -66,6 +99,11 @@ resource "azurerm_network_interface" "nic" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.pip.id
   }
+}
+
+resource "azurerm_network_interface_security_group_association" "nsg_assoc" {
+  network_interface_id      = azurerm_network_interface.nic.id
+  network_security_group_id = azurerm_network_security_group.nsg.id
 }
 
 resource "azurerm_linux_virtual_machine" "vm" {

@@ -10,7 +10,7 @@ locals {
 
 resource "google_storage_bucket" "bucket" {
   name          = local.bucket_name
-  location      = var.region
+  location      = regex("^[a-z]+-[a-z]+[0-9]+", var.region)
   project       = var.project_id
   storage_class = local.tier_map[var.storage_tier]
 

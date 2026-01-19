@@ -1,0 +1,31 @@
+{
+  "project_name": "gcp-demo-project",
+  "provider": "gcp",
+  "region": "europe-west1-b",
+  "version": "v1.0.0",
+  "services": [
+    {
+      "type": "compute.instance",
+      "instance_id": "gcp-demo-vm",
+      "size": "small",
+      "os": "debian",
+      "disk_size_gb": 20,
+      "metadata": {
+        "app": "demo-app",
+        "tier": "backend"
+      },
+      "project_id": "project-9d21db3e-1ebb-4126-a89",
+      "allowed_ports": [
+        80,
+        443
+      ]
+    },
+    {
+      "type": "storage.object",
+      "bucket_id": "sky-control-demo-gcp-bucket-unique",
+      "storage_tier": "standard",
+      "versioning": true,
+      "project_id": "project-9d21db3e-1ebb-4126-a89"
+    }
+  ]
+}

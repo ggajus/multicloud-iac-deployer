@@ -3,3 +3,9 @@
 *.tfstate.backup
 *.tfplan
 *.lock.hcl
+*.tfvars
+!test.tfvars
+.env
+deployment/*
+/deployer
+crash.log

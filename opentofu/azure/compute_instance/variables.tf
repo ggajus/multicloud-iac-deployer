@@ -1,9 +1,4 @@
-variable "subscription_id" {
-  description = "The Azure Subscription ID."
-  type        = string
-}
-
-variable "location" {
+variable "region" {
   description = "Azure Region (e.g., West Europe, East US)."
   type        = string
 }
@@ -56,4 +51,10 @@ variable "ssh_public_key" {
   description = "SSH Public Key string. If empty, one will be generated."
   type        = string
   default     = ""
+}
+
+variable "allowed_ports" {
+  description = "List of ports to allow ingress traffic on."
+  type        = list(number)
+  default     = []
 }

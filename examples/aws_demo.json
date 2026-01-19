@@ -1,0 +1,31 @@
+{
+  "project_name": "aws-demo-project",
+  "provider": "aws",
+  "region": "eu-north-1",
+  "version": "v1.0.0",
+  "services": [
+    {
+      "type": "compute.instance",
+      "instance_id": "aws-demo-vm",
+      "size": "small",
+      "os": "ubuntu",
+      "disk_size_gb": 20,
+      "metadata": {
+        "app": "demo-app",
+        "tier": "backend"
+      },
+      "ssh_public_key": "",
+      "allowed_ports": [
+        80,
+        443,
+        8080
+      ]
+    },
+    {
+      "type": "storage.object",
+      "bucket_id": "sky-control-demo-aws-bucket-unique-123",
+      "storage_tier": "standard",
+      "versioning": true
+    }
+  ]
+}
