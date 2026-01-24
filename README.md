@@ -4,7 +4,7 @@ A protype CLI tool to deploy infrastructure (Compute Instances and Storage Bucke
 
 ## Prerequisites
 
-- **Go** (1.21+)
+- **Go** (1.25+)
 - **OpenTofu** (installed as `tofu`)
 - **Cloud Credentials** see `.env.example json configuration files located in the `examples` folder.
 ```bash
