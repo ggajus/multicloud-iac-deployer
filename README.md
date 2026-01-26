@@ -1,6 +1,6 @@
 # Multi-Cloud IaC Provisioner
 
-A protype CLI tool to deploy infrastructure (Compute Instances and Storage Buckets) across AWS, GCP, and Azure using a unified JSON configuration and OpenTofu.
+A protype CLI tool to deploy infrastructure (Compute Instances and Storage Buckets) across AWS, GCP and Azure using a unified JSON configuration and OpenTofu.
 
 ## Prerequisites
 
@@ -27,17 +27,33 @@ Deploy resources defined in a config file. Example configs can be found in the `
 **Example Config (`examples/gcp_demo.json`):**
 ```json
 {
-  "provider": "gcp",
-  "project_name": "demo-project",
-  "region": "us-central1",
+  "project_name": "azure-demo-project",
+  "provider": "azure",
+  "region": "Sweden Central",
+  "version": "v1.0.0",
   "services": [
     {
       "type": "compute.instance",
-      "instance_id": "demo-vm",
+      "instance_id": "az-demo-vm",
       "size": "small",
       "os": "ubuntu",
-      "disk_size_gb": 20,
-      "project_id": "your-gcp-project-id"
+      "disk_size_gb": 30,
+      "metadata": {
+        "app": "demo-app",
+        "tier": "backend"
+      },
+      "ssh_public_key": "",
+      "allowed_ports": [
+        22,
+        80,
+        443
+      ]
+    },
+    {
+      "type": "storage.object",
+      "bucket_id": "skycontroldemoazunique",
+      "storage_tier": "standard",
+      "versioning": false
     }
   ]
 }
