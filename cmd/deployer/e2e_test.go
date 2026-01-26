@@ -72,7 +72,7 @@ func TestE2E_DeployAndDestroy(t *testing.T) {
 
 			// 2. Run Deploy
 			fmt.Printf(">>> Starting Deployment for %s\n", exampleRelPath)
-			err = runDeploy(configPath, rootPath)
+			err = runDeploy(configPath, rootPath, true)
 			if err != nil {
 				t.Logf("Deployment failed for %s: %v", exampleRelPath, err)
 				t.Log("Skipping destroy verification due to deployment failure (this is expected if credentials are missing)")

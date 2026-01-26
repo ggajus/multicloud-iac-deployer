@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/joho/godotenv"
 
@@ -112,7 +115,7 @@ func runOutput(deployDir string) error {
 	return nil
 }
 
-func runDeploy(configPath string, rootPath string) error {
+func runDeploy(configPath string, rootPath string, skipConfirm bool) error {
 	// Generate Plan
 	plan, err := config.GeneratePlan(configPath, rootPath)
 	if err != nil {
@@ -120,7 +123,28 @@ func runDeploy(configPath string, rootPath string) error {
 	}
 
 	fmt.Printf("✓ Plan generated. Output directory: %s\n", plan.OutputDir)
-	fmt.Printf("✓ Found %d resources to deploy.\n", len(plan.Resources))
+	
+	fmt.Println("\nDeployment Plan:")
+	fmt.Printf("  Cloud Provider: %s\n", plan.Provider)
+	fmt.Printf("  Region: %s\n", plan.Region)
+	fmt.Printf("  Output Directory: %s\n", plan.OutputDir)
+	fmt.Printf("  Resources (%d):\n", len(plan.Resources))
+	for _, res := range plan.Resources {
+		fmt.Printf("    - %s (Type: %s)\n", res.ID, res.Type)
+	}
+	fmt.Println()
+
+	if !skipConfirm {
+		fmt.Print("Do you want to proceed? [y/N]: ")
+		reader := bufio.NewReader(os.Stdin)
+		response, _ := reader.ReadString('\n')
+		response = strings.TrimSpace(response)
+
+		if strings.ToLower(response) != "y" {
+			fmt.Println("Deployment cancelled.")
+			return nil
+		}
+	}
 
 	// Create Output Directory
 	if err := os.MkdirAll(plan.OutputDir, 0755); err != nil {
@@ -304,11 +328,25 @@ func main() {
 
 	switch command {
 	case "deploy":
-		if len(os.Args) < 3 {
-			fmt.Println("Usage: deployer deploy <config.json>")
+		// Parse flags for the deploy command
+		deployCmd := flag.NewFlagSet("deploy", flag.ExitOnError)
+		skipConfirm := deployCmd.Bool("s", false, "Skip confirmation")
+
+		// Parse arguments excluding the program name and "deploy" command
+		if err := deployCmd.Parse(os.Args[2:]); err != nil {
+			fmt.Println("Usage: deployer deploy [-s] <config.json>")
 			os.Exit(1)
 		}
-		if err := runDeploy(os.Args[2], rootPath); err != nil {
+
+		args := deployCmd.Args()
+		if len(args) < 1 {
+			fmt.Println("Usage: deployer deploy [-s] <config.json>")
+			os.Exit(1)
+		}
+
+		configPath := args[0]
+
+		if err := runDeploy(configPath, rootPath, *skipConfirm); err != nil {
 			fmt.Fprintf(os.Stderr, "❌ Deployment failed: %v\n", err)
 			os.Exit(1)
 		}
@@ -336,14 +374,14 @@ func main() {
 		// Fallback for backward compatibility or direct config execution
 		// If first arg is a file that ends in .json, assume deploy
 		if filepath.Ext(command) == ".json" {
-			if err := runDeploy(command, rootPath); err != nil {
+			if err := runDeploy(command, rootPath, false); err != nil {
 				fmt.Fprintf(os.Stderr, "❌ Deployment failed: %v\n", err)
 				os.Exit(1)
 			}
 		} else {
 			fmt.Printf("Unknown command: %s\n", command)
 			fmt.Println("Usage:")
-			fmt.Println("  deployer deploy <config.json>")
+			fmt.Println("  deployer deploy [-s] <config.json>")
 			fmt.Println("  deployer output <deployment_directory>")
 			fmt.Println("  deployer destroy <deployment_directory>")
 			fmt.Println("  deployer verify-creds")

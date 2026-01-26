@@ -28,6 +28,7 @@ type ResourcePlan struct {
 
 type DeploymentPlan struct {
 	Provider  string
+	Region    string
 	OutputDir string
 	Resources []ResourcePlan
 }
@@ -280,6 +281,7 @@ func GeneratePlan(configPath string, rootPath string) (*DeploymentPlan, error) {
 
 	plan := &DeploymentPlan{
 		Provider:  config.Provider,
+		Region:    config.Region,
 		OutputDir: outputDir,
 		Resources: []ResourcePlan{},
 	}

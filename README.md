@@ -23,6 +23,7 @@ Deploy resources defined in a config file. Example configs can be found in the `
 ```bash
 ./deployer deploy <config_file.json>
 ```
+The confirmation screen can be skipped using the `-s` flag.
 
 **Example Config (`examples/azure_demo.json`):**
 ```json
