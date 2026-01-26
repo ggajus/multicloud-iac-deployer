@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Multi-Cloud Infrastructure Deployment Configuration",
-    "description": "Schema for defining infrastructure deployments across AWS, GCP, and Azure",
+    "title": "Multi-Cloud Infrastructure Provisioning Configuration",
+    "description": "Schema for defining infrastructure provisioning across AWS, GCP, and Azure",
     "type": "object",
     "required": ["provider", "services", "region"],
     "properties": {
@@ -112,7 +112,7 @@
         },
         "version": {
             "type": "string",
-            "description": "Optional version identifier for this deployment"
+            "description": "Optional version identifier for this provisioning"
         }
     }
 }

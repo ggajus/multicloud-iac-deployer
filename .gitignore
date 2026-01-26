@@ -6,6 +6,6 @@
 *.tfvars
 !test.tfvars
 .env
-deployment/*
-/deployer
+provisioning/*
+/provisioner
 crash.log

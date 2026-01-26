@@ -26,7 +26,7 @@ type ResourcePlan struct {
 	ModuleDir string
 }
 
-type DeploymentPlan struct {
+type ProvisioningPlan struct {
 	Provider  string
 	Region    string
 	OutputDir string
@@ -243,8 +243,8 @@ func GetServiceFolderName(serviceType string) string {
 	return strings.ReplaceAll(serviceType, ".", "_")
 }
 
-// GeneratePlan parses the config and returns a deployment plan.
-func GeneratePlan(configPath string, rootPath string) (*DeploymentPlan, error) {
+// GeneratePlan parses the config and returns a provisioning plan.
+func GeneratePlan(configPath string, rootPath string) (*ProvisioningPlan, error) {
 	// Load configuration
 	configData, err := os.ReadFile(configPath)
 	if err != nil {
@@ -277,9 +277,9 @@ func GeneratePlan(configPath string, rootPath string) (*DeploymentPlan, error) {
 	sanitizedProjectName := strings.ReplaceAll(config.ProjectName, " ", "_")
 	sanitizedProjectName = strings.ReplaceAll(sanitizedProjectName, "/", "-")
 
-	outputDir := filepath.Join(rootPath, "deployment", config.Provider, sanitizedProjectName)
+	outputDir := filepath.Join(rootPath, "provisioning", config.Provider, sanitizedProjectName)
 
-	plan := &DeploymentPlan{
+	plan := &ProvisioningPlan{
 		Provider:  config.Provider,
 		Region:    config.Region,
 		OutputDir: outputDir,

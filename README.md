@@ -1,6 +1,6 @@
 # Multi-Cloud IaC Provisioner
 
-A protype CLI tool to deploy infrastructure (Compute Instances and Storage Buckets) across AWS, GCP and Azure using a unified JSON configuration and OpenTofu.
+A protype CLI tool to provision infrastructure (Compute Instances and Storage Buckets) across AWS, GCP and Azure using a unified JSON configuration and OpenTofu.
 
 ## Prerequisites
 
@@ -11,17 +11,17 @@ A protype CLI tool to deploy infrastructure (Compute Instances and Storage Bucke
 ## Installation
 
 ```bash
-go build -o deployer ./cmd/deployer
+go build -o provisioner ./cmd/provisioner
 ```
 
 ## Usage
 
 ### 1. Provision Infrastructure
 
-Deploy resources defined in a config file. Example configs can be found in the `examples` folder.
+Provision resources defined in a config file. Example configs can be found in the `examples` folder.
 
 ```bash
-./deployer deploy <config_file.json>
+./provisioner provision <config_file.json>
 ```
 The confirmation screen can be skipped using the `-s` flag.
 
@@ -62,18 +62,18 @@ The confirmation screen can be skipped using the `-s` flag.
 
 ### 2. View Outputs
 
-View connection strings, IPs, and other outputs for an existing deployment.
+View connection strings, IPs, and other outputs for an existing provisioning.
 
 ```bash
-./deployer output deployment/<provider>/<project_name>
+./provisioner output provisioning/<provider>/<project_name>
 ```
 
 ### 3. Destroy Infrastructure
 
-Tear down all resources in a deployment directory.
+Tear down all resources in a provisioning directory.
 
 ```bash
-./deployer destroy deployment/<provider>/<project_name>
+./provisioner destroy provisioning/<provider>/<project_name>
 ```
 
 ### 4. Verify Credentials
@@ -81,18 +81,18 @@ Tear down all resources in a deployment directory.
 Test if your cloud provider environment variables are set correctly.
 
 ```bash
-./deployer verify-creds
+./provisioner verify-creds
 ```
 
 ### 5. Test Provisioning
 Provisioning can be tested using the example json configuration files located in the `examples` folder.
 ```bash
-go test -v -tags=integration ./cmd/deployer 
+go test -v -tags=integration ./cmd/provisioner 
 ```
 
 ## Project Structure
 
-- `cmd/deployer`: Main application logic.
+- `cmd/provisioner`: Main application logic.
 - `pkg/config`: Configuration parsing and validation.
 - `opentofu/`: Terraform/OpenTofu modules for each provider.
 - `parser/`: JSON schema and generator configuration.

@@ -11,19 +11,19 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"multicloud-iac-deployer/pkg/config"
+	"multicloud-iac-provisioner/pkg/config"
 )
 
-// To run these tests: go test -v -tags=integration ./cmd/deployer
+// To run these tests: go test -v -tags=integration ./cmd/provisioner
 
-func TestE2E_DeployAndDestroy(t *testing.T) {
+func TestE2E_ProvisionAndDestroy(t *testing.T) {
 	// Find project root
 	wd, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("Failed to get working directory: %v", err)
 	}
 
-	// We assume we are running from project root or cmd/deployer.
+	// We assume we are running from project root or cmd/provisioner.
 	// Adjust rootPath finding logic.
 	var rootPath string
 	if _, err := os.Stat(filepath.Join(wd, "examples")); err == nil {
@@ -50,7 +50,7 @@ func TestE2E_DeployAndDestroy(t *testing.T) {
 
 	for _, exampleRelPath := range examples {
 		configPath := filepath.Join(rootPath, exampleRelPath)
-		t.Run(fmt.Sprintf("Deploy_%s", filepath.Base(configPath)), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Provision_%s", filepath.Base(configPath)), func(t *testing.T) {
 			
 			// 1. Parse Config to predict output directory
 			configData, err := os.ReadFile(configPath)
@@ -65,17 +65,17 @@ func TestE2E_DeployAndDestroy(t *testing.T) {
 			// Reconstruct expected output dir logic
 			// sanitizedProjectName := strings.ReplaceAll(cfg.ProjectName, " ", "_") 
 			// sanitizedProjectName = strings.ReplaceAll(sanitizedProjectName, "/", "-")
-			// But we can just rely on runDeploy returning error or not, 
-			// and verify the directory exists after deployment.
+			// But we can just rely on runProvision returning error or not, 
+			// and verify the directory exists after provisioning.
 			
-			// Note: runDeploy prints to stdout, which go test captures.
+			// Note: runProvision prints to stdout, which go test captures.
 
-			// 2. Run Deploy
-			fmt.Printf(">>> Starting Deployment for %s\n", exampleRelPath)
-			err = runDeploy(configPath, rootPath, true)
+			// 2. Run Provision
+			fmt.Printf(">>> Starting Provisioning for %s\n", exampleRelPath)
+			err = runProvision(configPath, rootPath, true)
 			if err != nil {
-				t.Logf("Deployment failed for %s: %v", exampleRelPath, err)
-				t.Log("Skipping destroy verification due to deployment failure (this is expected if credentials are missing)")
+				t.Logf("Provisioning failed for %s: %v", exampleRelPath, err)
+				t.Log("Skipping destroy verification due to provisioning failure (this is expected if credentials are missing)")
 				// We don't fail the test immediately because we want to try the others, 
 				// and mostly likely the user doesn't have all 3 clouds configured.
 				// However, if strict testing is required, use t.Fail()
@@ -112,7 +112,7 @@ func TestE2E_DeployAndDestroy(t *testing.T) {
 
 			// Verify directory is gone
 			if _, err := os.Stat(plan.OutputDir); !os.IsNotExist(err) {
-				t.Errorf("Deployment directory should have been removed: %s", plan.OutputDir)
+				t.Errorf("Provisioning directory should have been removed: %s", plan.OutputDir)
 			}
 		})
 	}

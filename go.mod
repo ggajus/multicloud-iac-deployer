@@ -1,4 +1,4 @@
-module multicloud-iac-deployer
+module multicloud-iac-provisioner
 
 go 1.25.5
 

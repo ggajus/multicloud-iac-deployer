@@ -13,7 +13,7 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"multicloud-iac-deployer/pkg/config"
+	"multicloud-iac-provisioner/pkg/config"
 )
 
 func runCommand(dir string, name string, args ...string) error {
@@ -84,18 +84,18 @@ func printOutputs(dir string) error {
 	return nil
 }
 
-func runOutput(deployDir string) error {
-	absDeployDir, err := filepath.Abs(deployDir)
+func runOutput(provisionDir string) error {
+	absProvisionDir, err := filepath.Abs(provisionDir)
 	if err != nil {
 		return fmt.Errorf("error getting absolute path: %w", err)
 	}
 
-	entries, err := os.ReadDir(absDeployDir)
+	entries, err := os.ReadDir(absProvisionDir)
 	if err != nil {
-		return fmt.Errorf("error reading deployment directory: %w", err)
+		return fmt.Errorf("error reading provisioning directory: %w", err)
 	}
 
-	fmt.Printf("Retrieving outputs from: %s\n", absDeployDir)
+	fmt.Printf("Retrieving outputs from: %s\n", absProvisionDir)
 
 	for _, entry := range entries {
 		if !entry.IsDir() {
@@ -106,7 +106,7 @@ func runOutput(deployDir string) error {
 		fmt.Printf("Resource: %s\n", entry.Name())
 		fmt.Printf("----------------------------------------------------------------\n")
 
-		resourceDir := filepath.Join(absDeployDir, entry.Name())
+		resourceDir := filepath.Join(absProvisionDir, entry.Name())
 		if err := printOutputs(resourceDir); err != nil {
 			fmt.Printf("❌ Error retrieving outputs: %v\n", err)
 		}
@@ -115,7 +115,7 @@ func runOutput(deployDir string) error {
 	return nil
 }
 
-func runDeploy(configPath string, rootPath string, skipConfirm bool) error {
+func runProvision(configPath string, rootPath string, skipConfirm bool) error {
 	// Generate Plan
 	plan, err := config.GeneratePlan(configPath, rootPath)
 	if err != nil {
@@ -124,7 +124,7 @@ func runDeploy(configPath string, rootPath string, skipConfirm bool) error {
 
 	fmt.Printf("✓ Plan generated. Output directory: %s\n", plan.OutputDir)
 	
-	fmt.Println("\nDeployment Plan:")
+	fmt.Println("\nProvisioning Plan:")
 	fmt.Printf("  Cloud Provider: %s\n", plan.Provider)
 	fmt.Printf("  Region: %s\n", plan.Region)
 	fmt.Printf("  Output Directory: %s\n", plan.OutputDir)
@@ -141,7 +141,7 @@ func runDeploy(configPath string, rootPath string, skipConfirm bool) error {
 		response = strings.TrimSpace(response)
 
 		if strings.ToLower(response) != "y" {
-			fmt.Println("Deployment cancelled.")
+			fmt.Println("Provisioning cancelled.")
 			return nil
 		}
 	}
@@ -154,7 +154,7 @@ func runDeploy(configPath string, rootPath string, skipConfirm bool) error {
 	// Execute Plan
 	for _, res := range plan.Resources {
 		fmt.Printf("\n----------------------------------------------------------------\n")
-		fmt.Printf("Deploying Resource: %s (Type: %s)\n", res.ID, res.Type)
+		fmt.Printf("Provisioning Resource: %s (Type: %s)\n", res.ID, res.Type)
 		fmt.Printf("----------------------------------------------------------------\n")
 
 		targetDir := filepath.Join(plan.OutputDir, res.ID)
@@ -187,14 +187,14 @@ func runDeploy(configPath string, rootPath string, skipConfirm bool) error {
 		for _, out := range moduleOutputs {
 			outputBlocks += fmt.Sprintf(`
 output "%s" {
-  value = module.deploy.%s
+  value = module.provision.%s
 }
 `, out, out)
 		}
 
 		// 2. Generate main.tf with Module Reference AND Output Forwarding
 		mainTfContent := fmt.Sprintf(`
-module "deploy" {
+module "provision" {
   source = "%s"
 
 %s
@@ -220,7 +220,7 @@ module "deploy" {
 			return fmt.Errorf("error applying OpenTofu for %s: %w", res.ID, err)
 		}
 
-		fmt.Printf("✓ Successfully deployed %s\n", res.ID)
+		fmt.Printf("✓ Successfully provisioned %s\n", res.ID)
 
 		// 5. Display Outputs
 		if err := printOutputs(targetDir); err != nil {
@@ -229,22 +229,22 @@ module "deploy" {
 	}
 
 	fmt.Printf("\n================================================================\n")
-	fmt.Printf("Deployment Complete!\n")
+	fmt.Printf("Provisioning Complete!\n")
 	fmt.Printf("State stored in: %s\n", plan.OutputDir)
 	return nil
 }
 
-func runDestroy(deployDir string) error {
-	absDeployDir, err := filepath.Abs(deployDir)
+func runDestroy(provisionDir string) error {
+	absProvisionDir, err := filepath.Abs(provisionDir)
 	if err != nil {
 		return fmt.Errorf("error getting absolute path: %w", err)
 	}
 
-	fmt.Printf("Destroying deployment at: %s\n", absDeployDir)
+	fmt.Printf("Destroying provisioning at: %s\n", absProvisionDir)
 
-	entries, err := os.ReadDir(absDeployDir)
+	entries, err := os.ReadDir(absProvisionDir)
 	if err != nil {
-		return fmt.Errorf("error reading deployment directory: %w", err)
+		return fmt.Errorf("error reading provisioning directory: %w", err)
 	}
 
 	allDestroyed := true
@@ -255,7 +255,7 @@ func runDestroy(deployDir string) error {
 			continue
 		}
 
-		resourceDir := filepath.Join(absDeployDir, entry.Name())
+		resourceDir := filepath.Join(absProvisionDir, entry.Name())
 		fmt.Printf("\n----------------------------------------------------------------\n")
 		fmt.Printf("Destroying Resource: %s\n", entry.Name())
 		fmt.Printf("----------------------------------------------------------------\n")
@@ -276,14 +276,14 @@ func runDestroy(deployDir string) error {
 
 	fmt.Printf("\n================================================================\n")
 	if allDestroyed {
-		fmt.Printf("Destruction Complete! Removing deployment directory...\n")
-		if err := os.RemoveAll(absDeployDir); err != nil {
+		fmt.Printf("Destruction Complete! Removing provisioning directory...\n")
+		if err := os.RemoveAll(absProvisionDir); err != nil {
 			fmt.Printf("❌ Error removing directory: %v\n", err)
 		} else {
-			fmt.Printf("✓ Removed %s\n", absDeployDir)
+			fmt.Printf("✓ Removed %s\n", absProvisionDir)
 		}
 	} else {
-		fmt.Printf("⚠️  Destruction finished with errors. Deployment directory preserved at: %s\n", absDeployDir)
+		fmt.Printf("⚠️  Destruction finished with errors. Provisioning directory preserved at: %s\n", absProvisionDir)
 	}
 	
 	if !allDestroyed {
@@ -297,10 +297,10 @@ func main() {
 
 	if len(os.Args) < 2 {
 		fmt.Println("Usage:")
-		fmt.Println("  deployer deploy <config.json>")
-		fmt.Println("  deployer output <deployment_directory>")
-		fmt.Println("  deployer destroy <deployment_directory>")
-		fmt.Println("  deployer verify-creds")
+		fmt.Println("  provisioner provision <config.json>")
+		fmt.Println("  provisioner output <provisioning_directory>")
+		fmt.Println("  provisioner destroy <provisioning_directory>")
+		fmt.Println("  provisioner verify-creds")
 		os.Exit(1)
 	}
 
@@ -327,32 +327,32 @@ func main() {
 	}
 
 	switch command {
-	case "deploy":
-		// Parse flags for the deploy command
-		deployCmd := flag.NewFlagSet("deploy", flag.ExitOnError)
-		skipConfirm := deployCmd.Bool("s", false, "Skip confirmation")
+	case "provision":
+		// Parse flags for the provision command
+		provisionCmd := flag.NewFlagSet("provision", flag.ExitOnError)
+		skipConfirm := provisionCmd.Bool("s", false, "Skip confirmation")
 
-		// Parse arguments excluding the program name and "deploy" command
-		if err := deployCmd.Parse(os.Args[2:]); err != nil {
-			fmt.Println("Usage: deployer deploy [-s] <config.json>")
+		// Parse arguments excluding the program name and "provision" command
+		if err := provisionCmd.Parse(os.Args[2:]); err != nil {
+			fmt.Println("Usage: provisioner provision [-s] <config.json>")
 			os.Exit(1)
 		}
 
-		args := deployCmd.Args()
+		args := provisionCmd.Args()
 		if len(args) < 1 {
-			fmt.Println("Usage: deployer deploy [-s] <config.json>")
+			fmt.Println("Usage: provisioner provision [-s] <config.json>")
 			os.Exit(1)
 		}
 
 		configPath := args[0]
 
-		if err := runDeploy(configPath, rootPath, *skipConfirm); err != nil {
-			fmt.Fprintf(os.Stderr, "❌ Deployment failed: %v\n", err)
+		if err := runProvision(configPath, rootPath, *skipConfirm); err != nil {
+			fmt.Fprintf(os.Stderr, "❌ Provisioning failed: %v\n", err)
 			os.Exit(1)
 		}
 	case "output":
 		if len(os.Args) < 3 {
-			fmt.Println("Usage: deployer output <deployment_directory>")
+			fmt.Println("Usage: provisioner output <provisioning_directory>")
 			os.Exit(1)
 		}
 		if err := runOutput(os.Args[2]); err != nil {
@@ -361,7 +361,7 @@ func main() {
 		}
 	case "destroy":
 		if len(os.Args) < 3 {
-			fmt.Println("Usage: deployer destroy <deployment_directory>")
+			fmt.Println("Usage: provisioner destroy <provisioning_directory>")
 			os.Exit(1)
 		}
 		if err := runDestroy(os.Args[2]); err != nil {
@@ -372,19 +372,19 @@ func main() {
 		runVerifyCreds()
 	default:
 		// Fallback for backward compatibility or direct config execution
-		// If first arg is a file that ends in .json, assume deploy
+		// If first arg is a file that ends in .json, assume provision
 		if filepath.Ext(command) == ".json" {
-			if err := runDeploy(command, rootPath, false); err != nil {
-				fmt.Fprintf(os.Stderr, "❌ Deployment failed: %v\n", err)
+			if err := runProvision(command, rootPath, false); err != nil {
+				fmt.Fprintf(os.Stderr, "❌ Provisioning failed: %v\n", err)
 				os.Exit(1)
 			}
 		} else {
 			fmt.Printf("Unknown command: %s\n", command)
 			fmt.Println("Usage:")
-			fmt.Println("  deployer deploy [-s] <config.json>")
-			fmt.Println("  deployer output <deployment_directory>")
-			fmt.Println("  deployer destroy <deployment_directory>")
-			fmt.Println("  deployer verify-creds")
+			fmt.Println("  provisioner provision [-s] <config.json>")
+			fmt.Println("  provisioner output <provisioning_directory>")
+			fmt.Println("  provisioner destroy <provisioning_directory>")
+			fmt.Println("  provisioner verify-creds")
 			os.Exit(1)
 		}
 	}
