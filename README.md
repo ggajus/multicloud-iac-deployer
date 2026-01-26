@@ -16,7 +16,16 @@ go build -o provisioner ./cmd/provisioner
 
 ## Usage
 
-### 1. Provision Infrastructure
+
+### 1. Verify Credentials
+
+Test if your cloud provider environment variables are set correctly.
+
+```bash
+./provisioner verify-creds
+```
+
+### 2. Provision Infrastructure
 
 Provision resources defined in a config file. Example configs can be found in the `examples` folder.
 
@@ -60,7 +69,7 @@ The confirmation screen can be skipped using the `-s` flag.
 }
 ```
 
-### 2. View Outputs
+### 3. View Outputs
 
 View connection strings, IPs, and other outputs for an existing provisioning.
 
@@ -68,20 +77,12 @@ View connection strings, IPs, and other outputs for an existing provisioning.
 ./provisioner output provisioning/<provider>/<project_name>
 ```
 
-### 3. Destroy Infrastructure
+### 4. Destroy Infrastructure
 
 Tear down all resources in a provisioning directory.
 
 ```bash
 ./provisioner destroy provisioning/<provider>/<project_name>
-```
-
-### 4. Verify Credentials
-
-Test if your cloud provider environment variables are set correctly.
-
-```bash
-./provisioner verify-creds
 ```
 
 ### 5. Test Provisioning
