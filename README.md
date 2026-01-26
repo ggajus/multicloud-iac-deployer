@@ -24,7 +24,7 @@ Deploy resources defined in a config file. Example configs can be found in the `
 ./deployer deploy <config_file.json>
 ```
 
-**Example Config (`examples/gcp_demo.json`):**
+**Example Config (`examples/azure_demo.json`):**
 ```json
 {
   "project_name": "azure-demo-project",
